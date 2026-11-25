@@ -32,3 +32,11 @@ jobs:
 
       - name: Build project
         run: npm run build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: tetris-web-application
+          path: typescript-tetris-game-1.0.0/dist/
+          if-no-files-found: error
+          retention-days: 14
