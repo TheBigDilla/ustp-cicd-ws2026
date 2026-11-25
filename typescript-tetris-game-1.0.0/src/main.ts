@@ -1,23 +1,19 @@
 
 import './style.css';
 
-const COLUMNS = 10;
-const ROWS = 20;
+import {
+  COLUMNS,
+  ROWS,
+  SHAPES,
+  createBoard,
+  createPiece,
+  collision,
+  rotate,
+} from './game-logic';
+
+import type { Board, Matrix, Piece, PieceType } from './game-logic';
+
 const CELL = 30;
-
-type PieceType = 'I' | 'O' | 'T' | 'S' | 'Z' | 'J' | 'L';
-type Matrix = number[][];
-type Piece = { type: PieceType; matrix: Matrix; x: number; y: number };
-
-const SHAPES: Record<PieceType, Matrix> = {
-  I: [[1, 1, 1, 1]],
-  O: [[1, 1], [1, 1]],
-  T: [[0, 1, 0], [1, 1, 1]],
-  S: [[0, 1, 1], [1, 1, 0]],
-  Z: [[1, 1, 0], [0, 1, 1]],
-  J: [[1, 0, 0], [1, 1, 1]],
-  L: [[0, 0, 1], [1, 1, 1]],
-};
 
 const COLORS: Record<PieceType, [string, string]> = {
   I: ['#39d8ef', '#1199c4'],
@@ -29,77 +25,50 @@ const COLORS: Record<PieceType, [string, string]> = {
   L: ['#ffad61', '#e5773b'],
 };
 
-// Retrieve required HTML elements and ensure they exist.
-function getRequiredElement<T extends Element>(selector: string): T {
-  const element = document.querySelector<T>(selector);
+const gameCanvas = document.querySelector<HTMLCanvasElement>('#game-canvas');
+const holdCanvas = document.querySelector<HTMLCanvasElement>('#hold-canvas');
+const nextCanvas = document.querySelector<HTMLCanvasElement>('#next-canvas');
+const overlay = document.querySelector<HTMLDivElement>('#overlay');
+const overlayKicker = document.querySelector<HTMLSpanElement>('#overlay-kicker');
+const overlayTitle = document.querySelector<HTMLElement>('#overlay-title');
+const overlayCopy = document.querySelector<HTMLSpanElement>('#overlay-copy');
+const overlayButton = document.querySelector<HTMLButtonElement>('#overlay-button');
+const scoreElement = document.querySelector<HTMLElement>('#score');
+const bestElement = document.querySelector<HTMLElement>('#best');
+const levelElement = document.querySelector<HTMLElement>('#level');
+const linesElement = document.querySelector<HTMLElement>('#lines');
+const holdStatus = document.querySelector<HTMLElement>('#hold-status');
 
-  if (!element) {
-    throw new Error(`Required HTML element not found: ${selector}`);
-  }
-
-  return element;
+if (
+  !gameCanvas ||
+  !holdCanvas ||
+  !nextCanvas ||
+  !overlay ||
+  !overlayKicker ||
+  !overlayTitle ||
+  !overlayCopy ||
+  !overlayButton ||
+  !scoreElement ||
+  !bestElement ||
+  !levelElement ||
+  !linesElement ||
+  !holdStatus
+) {
+  throw new Error('The game UI is incomplete.');
 }
 
-// Initialize canvas rendering context and check availability.
-function getCanvasContext(
-  canvas: HTMLCanvasElement
-): CanvasRenderingContext2D {
-  const ctx = canvas.getContext('2d');
+const context = gameCanvas.getContext('2d');
+const holdContext = holdCanvas.getContext('2d');
+const nextContext = nextCanvas.getContext('2d');
 
-  if (!ctx) {
-    throw new Error('Canvas rendering is unavailable.');
-  }
-
-  return ctx;
+if (!context || !holdContext || !nextContext) {
+  throw new Error('Canvas rendering is unavailable.');
 }
 
-const gameCanvas =
-  getRequiredElement<HTMLCanvasElement>('#game-canvas');
-
-const holdCanvas =
-  getRequiredElement<HTMLCanvasElement>('#hold-canvas');
-
-const nextCanvas =
-  getRequiredElement<HTMLCanvasElement>('#next-canvas');
-
-const overlay =
-  getRequiredElement<HTMLDivElement>('#overlay');
-
-const overlayKicker =
-  getRequiredElement<HTMLSpanElement>('#overlay-kicker');
-
-const overlayTitle =
-  getRequiredElement<HTMLElement>('#overlay-title');
-
-const overlayCopy =
-  getRequiredElement<HTMLSpanElement>('#overlay-copy');
-
-const overlayButton =
-  getRequiredElement<HTMLButtonElement>('#overlay-button');
-
-const scoreElement =
-  getRequiredElement<HTMLElement>('#score');
-
-const bestElement =
-  getRequiredElement<HTMLElement>('#best');
-
-const levelElement =
-  getRequiredElement<HTMLElement>('#level');
-
-const linesElement =
-  getRequiredElement<HTMLElement>('#lines');
-
-const holdStatus =
-  getRequiredElement<HTMLElement>('#hold-status');
-
-const context = getCanvasContext(gameCanvas);
-const holdContext = getCanvasContext(holdCanvas);
-const nextContext = getCanvasContext(nextCanvas);
-
-let board = createBoard();
+let board: Board = createBoard();
 let bag: PieceType[] = [];
 let upcoming: PieceType[] = [];
-let active = createPiece(drawFromBag());
+let active: Piece = createPiece(drawFromBag());
 let held: PieceType | null = null;
 let canHold = true;
 let score = 0;
@@ -110,13 +79,6 @@ let paused = false;
 let gameOver = false;
 let lastDrop = 0;
 let animationFrame = 0;
-
-function createBoard(): (PieceType | null)[][] {
-  return Array.from(
-    { length: ROWS },
-    () => Array<PieceType | null>(COLUMNS).fill(null)
-  );
-}
 
 function refillBag(): void {
   const types = Object.keys(SHAPES) as PieceType[];
@@ -134,40 +96,6 @@ function drawFromBag(): PieceType {
   return bag.pop()!;
 }
 
-function createPiece(type: PieceType): Piece {
-  const matrix = SHAPES[type].map((row) => [...row]);
-
-  return {
-    type,
-    matrix,
-    x: Math.floor((COLUMNS - matrix[0].length) / 2),
-    y: 0,
-  };
-}
-
-function collision(
-  piece: Piece,
-  dx = 0,
-  dy = 0,
-  matrix = piece.matrix
-): boolean {
-  return matrix.some((row, rowIndex) =>
-    row.some((value, columnIndex) => {
-      if (!value) return false;
-
-      const x = piece.x + columnIndex + dx;
-      const y = piece.y + rowIndex + dy;
-
-      return (
-        x < 0 ||
-        x >= COLUMNS ||
-        y >= ROWS ||
-        (y >= 0 && board[y][x] !== null)
-      );
-    })
-  );
-}
-
 function fillUpcoming(): void {
   while (upcoming.length < 6) {
     upcoming.push(drawFromBag());
@@ -182,13 +110,7 @@ function spawnNext(): void {
   canHold = true;
   holdStatus.textContent = 'SAVE FOR LATER';
 
-  if (collision(active)) finishGame();
-}
-
-function rotate(matrix: Matrix): Matrix {
-  return matrix[0].map((_, column) =>
-    matrix.map((row) => row[column]).reverse()
-  );
+  if (collision(active, board)) finishGame();
 }
 
 function rotateActive(): void {
@@ -197,7 +119,7 @@ function rotateActive(): void {
   const rotated = rotate(active.matrix);
 
   for (const offset of [0, -1, 1, -2, 2]) {
-    if (!collision(active, offset, 0, rotated)) {
+    if (!collision(active, board, offset, 0, rotated)) {
       active.matrix = rotated;
       active.x += offset;
       return;
@@ -206,7 +128,7 @@ function rotateActive(): void {
 }
 
 function move(dx: number, dy: number): boolean {
-  if (paused || gameOver || collision(active, dx, dy)) {
+  if (paused || gameOver || collision(active, board, dx, dy)) {
     return false;
   }
 
@@ -227,7 +149,7 @@ function holdPiece(): void {
     active = createPiece(held);
     held = currentType;
 
-    if (collision(active)) finishGame();
+    if (collision(active, board)) finishGame();
   } else {
     held = currentType;
     spawnNext();
@@ -242,7 +164,7 @@ function hardDrop(): void {
 
   let distance = 0;
 
-  while (!collision(active, 0, 1)) {
+  while (!collision(active, board, 0, 1)) {
     active.y += 1;
     distance += 1;
   }
@@ -299,7 +221,7 @@ function finishGame(): void {
   try {
     localStorage.setItem('vector-blocks-best', String(best));
   } catch {
-    /* Storage can be unavailable in private browsing. */
+    // Storage can be unavailable in private browsing.
   }
 
   showOverlay(
@@ -375,8 +297,8 @@ function restart(): void {
   level = 1;
   paused = false;
   gameOver = false;
-
   active = createPiece(drawFromBag());
+
   fillUpcoming();
 
   overlay.hidden = true;
@@ -396,13 +318,7 @@ function paintBlock(
   const [light, dark] = COLORS[type];
   const inset = Math.max(1, size * 0.045);
 
-  const gradient = ctx.createLinearGradient(
-    x,
-    y,
-    x + size,
-    y + size
-  );
-
+  const gradient = ctx.createLinearGradient(x, y, x + size, y + size);
   gradient.addColorStop(0, light);
   gradient.addColorStop(1, dark);
 
@@ -433,6 +349,7 @@ function paintBlock(
 
 function drawBoard(): void {
   context.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+
   context.fillStyle = '#0c101a';
   context.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
 
@@ -455,16 +372,14 @@ function drawBoard(): void {
 
   board.forEach((row, y) =>
     row.forEach((type, x) => {
-      if (type) {
-        paintBlock(context, type, x * CELL, y * CELL, CELL);
-      }
+      if (type) paintBlock(context, type, x * CELL, y * CELL, CELL);
     })
   );
 
   if (!gameOver) {
     let ghostY = active.y;
 
-    while (!collision(active, 0, ghostY - active.y + 1)) {
+    while (!collision(active, board, 0, ghostY - active.y + 1)) {
       ghostY++;
     }
 
@@ -477,12 +392,7 @@ function drawBoard(): void {
 
         context.strokeStyle = 'rgba(190, 204, 229, 0.32)';
         context.lineWidth = 1;
-        context.strokeRect(
-          px + 3.5,
-          py + 3.5,
-          CELL - 7,
-          CELL - 7
-        );
+        context.strokeRect(px + 3.5, py + 3.5, CELL - 7, CELL - 7);
       })
     );
 
@@ -520,7 +430,6 @@ function drawPreview(
     if (!type) return;
 
     const matrix = SHAPES[type];
-
     const tile = Math.min(
       20,
       (width - 28) / Math.max(matrix[0].length, matrix.length)
@@ -528,7 +437,6 @@ function drawPreview(
 
     const shapeWidth = matrix[0].length * tile;
     const shapeHeight = matrix.length * tile;
-
     const startX = (width - shapeWidth) / 2;
     const startY = index * slotHeight + (slotHeight - shapeHeight) / 2;
 
@@ -576,9 +484,7 @@ function render(time: number): void {
 function handleKey(event: KeyboardEvent): void {
   const key = event.key.toLowerCase();
 
-  if (
-    ['arrowleft', 'arrowright', 'arrowdown', 'arrowup', ' '].includes(key)
-  ) {
+  if (['arrowleft', 'arrowright', 'arrowdown', 'arrowup', ' '].includes(key)) {
     event.preventDefault();
   }
 
@@ -627,33 +533,17 @@ function handleKey(event: KeyboardEvent): void {
 
 window.addEventListener('keydown', handleKey);
 
-document.querySelector('#restart-button')
-  ?.addEventListener('click', restart);
-
-document.querySelector('[data-action="left"]')
-  ?.addEventListener('click', () => move(-1, 0));
-
-document.querySelector('[data-action="right"]')
-  ?.addEventListener('click', () => move(1, 0));
-
-document.querySelector('[data-action="down"]')
-  ?.addEventListener('click', () => move(0, 1));
-
-document.querySelector('[data-action="rotate"]')
-  ?.addEventListener('click', rotateActive);
-
-document.querySelector('[data-action="drop"]')
-  ?.addEventListener('click', hardDrop);
-
-document.querySelector('[data-action="hold"]')
-  ?.addEventListener('click', holdPiece);
+document.querySelector('#restart-button')?.addEventListener('click', restart);
+document.querySelector('[data-action="left"]')?.addEventListener('click', () => move(-1, 0));
+document.querySelector('[data-action="right"]')?.addEventListener('click', () => move(1, 0));
+document.querySelector('[data-action="down"]')?.addEventListener('click', () => move(0, 1));
+document.querySelector('[data-action="rotate"]')?.addEventListener('click', rotateActive);
+document.querySelector('[data-action="drop"]')?.addEventListener('click', hardDrop);
+document.querySelector('[data-action="hold"]')?.addEventListener('click', holdPiece);
 
 updateStats();
 fillUpcoming();
-
 lastDrop = performance.now();
 animationFrame = requestAnimationFrame(render);
 
-window.addEventListener('pagehide', () => {
-  cancelAnimationFrame(animationFrame);
-});
+window.addEventListener('pagehide', () => cancelAnimationFrame(animationFrame));
