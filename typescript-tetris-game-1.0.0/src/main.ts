@@ -1,4 +1,15 @@
 import './style.css';
+import {
+  COLUMNS,
+  ROWS,
+  SHAPES,
+  createBoard,
+  createPiece,
+  collision,
+  rotate,
+} from './game-logic';
+
+import type { Board, Matrix, Piece, PieceType } from './game-logic';
 
 const COLUMNS = 10;
 const ROWS = 20;
