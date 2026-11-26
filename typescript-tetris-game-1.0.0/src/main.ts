@@ -11,7 +11,8 @@ import {
   rotate,
 } from './game-logic';
 
-import type { Board, Matrix, Piece, PieceType } from './game-logic';
+
+import type { Board, Piece, PieceType } from './game-logic';
 
 const CELL = 30;
 
@@ -25,45 +26,53 @@ const COLORS: Record<PieceType, [string, string]> = {
   L: ['#ffad61', '#e5773b'],
 };
 
-const gameCanvas = document.querySelector<HTMLCanvasElement>('#game-canvas');
-const holdCanvas = document.querySelector<HTMLCanvasElement>('#hold-canvas');
-const nextCanvas = document.querySelector<HTMLCanvasElement>('#next-canvas');
-const overlay = document.querySelector<HTMLDivElement>('#overlay');
-const overlayKicker = document.querySelector<HTMLSpanElement>('#overlay-kicker');
-const overlayTitle = document.querySelector<HTMLElement>('#overlay-title');
-const overlayCopy = document.querySelector<HTMLSpanElement>('#overlay-copy');
-const overlayButton = document.querySelector<HTMLButtonElement>('#overlay-button');
-const scoreElement = document.querySelector<HTMLElement>('#score');
-const bestElement = document.querySelector<HTMLElement>('#best');
-const levelElement = document.querySelector<HTMLElement>('#level');
-const linesElement = document.querySelector<HTMLElement>('#lines');
-const holdStatus = document.querySelector<HTMLElement>('#hold-status');
+// Sucht ein HTML-Element und wirft einen Fehler,
+// falls das Element im HTML nicht vorhanden ist.
+function getElement<T extends HTMLElement>(selector: string): T {
+  const element = document.querySelector<T>(selector);
 
-if (
-  !gameCanvas ||
-  !holdCanvas ||
-  !nextCanvas ||
-  !overlay ||
-  !overlayKicker ||
-  !overlayTitle ||
-  !overlayCopy ||
-  !overlayButton ||
-  !scoreElement ||
-  !bestElement ||
-  !levelElement ||
-  !linesElement ||
-  !holdStatus
-) {
-  throw new Error('The game UI is incomplete.');
+  if (!element) {
+    throw new Error(`HTML element not found: ${selector}`);
+  }
+
+  return element;
 }
 
-const context = gameCanvas.getContext('2d');
-const holdContext = holdCanvas.getContext('2d');
-const nextContext = nextCanvas.getContext('2d');
+// Stellt sicher, dass ein Canvas-Kontext verfügbar ist.
+function getCanvasContext(
+  canvas: HTMLCanvasElement
+): CanvasRenderingContext2D {
+  const ctx = canvas.getContext('2d');
 
-if (!context || !holdContext || !nextContext) {
-  throw new Error('Canvas rendering is unavailable.');
+  if (!ctx) {
+    throw new Error('Canvas rendering is unavailable.');
+  }
+
+  return ctx;
 }
+
+// HTML-Elemente
+const gameCanvas = getElement<HTMLCanvasElement>('#game-canvas');
+const holdCanvas = getElement<HTMLCanvasElement>('#hold-canvas');
+const nextCanvas = getElement<HTMLCanvasElement>('#next-canvas');
+
+const overlay = getElement<HTMLDivElement>('#overlay');
+const overlayKicker = getElement<HTMLSpanElement>('#overlay-kicker');
+const overlayTitle = getElement<HTMLElement>('#overlay-title');
+const overlayCopy = getElement<HTMLSpanElement>('#overlay-copy');
+const overlayButton = getElement<HTMLButtonElement>('#overlay-button');
+
+const scoreElement = getElement<HTMLElement>('#score');
+const bestElement = getElement<HTMLElement>('#best');
+const levelElement = getElement<HTMLElement>('#level');
+const linesElement = getElement<HTMLElement>('#lines');
+const holdStatus = getElement<HTMLElement>('#hold-status');
+
+// Canvas-Kontexte
+const context = getCanvasContext(gameCanvas);
+const holdContext = getCanvasContext(holdCanvas);
+const nextContext = getCanvasContext(nextCanvas);
+
 
 let board: Board = createBoard();
 let bag: PieceType[] = [];
