@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="15" failures="0" errors="0" time="0.011155">
+    <testsuite name="src/game-logic.test.ts" timestamp="2026-11-26T12:13:51.458Z" hostname="Anna-Convertible" tests="15" failures="0" errors="0" skipped="0" time="0.011155">
+        <testcase classname="src/game-logic.test.ts" name="createBoard &gt; creates a board with 20 rows and 10 columns" time="0.0035302">
+        </testcase>
+        <testcase classname="src/game-logic.test.ts" name="createBoard &gt; initializes every cell as empty" time="0.0002903">
+        </testcase>
+        <testcase classname="src/game-logic.test.ts" name="SHAPES &gt; contains all seven Tetris piece types" time="0.0008539">
+        </testcase>
+        <testcase classname="src/game-logic.test.ts" name="SHAPES &gt; defines the correct number of blocks for every piece" time="0.0003707">
+        </testcase>
+        <testcase classname="src/game-logic.test.ts" name="createPiece &gt; creates a piece at the top of the board" time="0.0003887">
+        </testcase>
+        <testcase classname="src/game-logic.test.ts" name="createPiece &gt; centers pieces horizontally" time="0.0001718">
+        </testcase>
+        <testcase classname="src/game-logic.test.ts" name="createPiece &gt; creates an independent matrix for each piece" time="0.0003522">
+        </testcase>
+        <testcase classname="src/game-logic.test.ts" name="rotate &gt; rotates a matrix clockwise" time="0.0002774">
+        </testcase>
+        <testcase classname="src/game-logic.test.ts" name="rotate &gt; rotates a rectangular matrix and changes its dimensions" time="0.0004629">
+        </testcase>
+        <testcase classname="src/game-logic.test.ts" name="collision &gt; does not detect a collision on an empty board" time="0.0003905">
+        </testcase>
+        <testcase classname="src/game-logic.test.ts" name="collision &gt; detects the left board boundary" time="0.0001706">
+        </testcase>
+        <testcase classname="src/game-logic.test.ts" name="collision &gt; detects the right board boundary" time="0.0001433">
+        </testcase>
+        <testcase classname="src/game-logic.test.ts" name="collision &gt; detects the bottom board boundary" time="0.0001328">
+        </testcase>
+        <testcase classname="src/game-logic.test.ts" name="collision &gt; detects a collision with an occupied cell" time="0.0001111">
+        </testcase>
+        <testcase classname="src/game-logic.test.ts" name="collision &gt; allows pieces to move above the top of the board" time="0.0001082">
+        </testcase>
+    </testsuite>
+</testsuites>
